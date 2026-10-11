@@ -17,7 +17,7 @@ function disposeObject(object: Object3D) {
 }
 
 type SensorModelProps = {
-  /** "auto" spins on its own and faces front while the page scrolls; "manual" turns only when dragged or with arrow keys. */
+  /** "auto" also turns to face front while the page scrolls. Both modes spin on their own and can be dragged. */
   mode?: "auto" | "manual";
   className?: string;
 };
@@ -71,9 +71,9 @@ export function SensorModel({ mode = "auto", className = "h-[300px] w-full sm:h-
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 1000);
       scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-      const key = new THREE.DirectionalLight(0xffffff, 1.6);
-      key.position.set(2, 3, 4);
-      scene.add(key);
+      const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+      keyLight.position.set(2, 3, 4);
+      scene.add(keyLight);
       scene.add(new THREE.DirectionalLight(0xd6e4ff, 0.55).translateX(-3).translateZ(-2));
 
       // The labeled face and opening sit on the model's underside. Turn that face toward the camera.
@@ -87,10 +87,8 @@ export function SensorModel({ mode = "auto", className = "h-[300px] w-full sm:h-
       const tilt = new THREE.Group();
       tilt.add(turntable);
       scene.add(tilt);
-      if (manual) {
-        turntable.rotation.y = 0.55;
-        tilt.rotation.x = 0.42;
-      }
+      tilt.rotation.x = 0.42;
+      if (manual) turntable.rotation.y = 0.55;
 
       camera.position.set(0, 0, 1);
       camera.lookAt(0, 0, 0);
@@ -122,55 +120,55 @@ export function SensorModel({ mode = "auto", className = "h-[300px] w-full sm:h-
       let lastX = 0;
       let lastY = 0;
 
-      if (manual) {
-        const canvas = renderer.domElement;
-        canvas.style.touchAction = "pan-y";
+      const canvas = renderer.domElement;
+      canvas.style.touchAction = "pan-y";
+      canvas.style.cursor = "grab";
+      const down = (event: PointerEvent) => {
+        dragging = true;
+        spin = 0;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        canvas.setPointerCapture(event.pointerId);
+        canvas.style.cursor = "grabbing";
+      };
+      const move = (event: PointerEvent) => {
+        if (!dragging) return;
+        const dx = event.clientX - lastX;
+        const dy = event.clientY - lastY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        spin = dx * 0.012;
+        turntable.rotation.y += spin;
+        tilt.rotation.x = Math.max(-0.7, Math.min(0.7, tilt.rotation.x + dy * 0.008));
+      };
+      const up = (event: PointerEvent) => {
+        dragging = false;
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
         canvas.style.cursor = "grab";
-        const down = (event: PointerEvent) => {
-          dragging = true;
-          spin = 0;
-          lastX = event.clientX;
-          lastY = event.clientY;
-          canvas.setPointerCapture(event.pointerId);
-          canvas.style.cursor = "grabbing";
-        };
-        const move = (event: PointerEvent) => {
-          if (!dragging) return;
-          const dx = event.clientX - lastX;
-          const dy = event.clientY - lastY;
-          lastX = event.clientX;
-          lastY = event.clientY;
-          spin = dx * 0.012;
-          turntable.rotation.y += spin;
-          tilt.rotation.x = Math.max(-0.7, Math.min(0.7, tilt.rotation.x + dy * 0.008));
-        };
-        const up = (event: PointerEvent) => {
-          dragging = false;
-          if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-          canvas.style.cursor = "grab";
-        };
-        const key = (event: KeyboardEvent) => {
-          const step = 0.18;
-          if (event.key === "ArrowLeft") turntable.rotation.y -= step;
-          else if (event.key === "ArrowRight") turntable.rotation.y += step;
-          else if (event.key === "ArrowUp") tilt.rotation.x = Math.max(-0.7, tilt.rotation.x - step);
-          else if (event.key === "ArrowDown") tilt.rotation.x = Math.min(0.7, tilt.rotation.x + step);
-          else return;
-          event.preventDefault();
-        };
-        canvas.addEventListener("pointerdown", down);
-        canvas.addEventListener("pointermove", move);
-        canvas.addEventListener("pointerup", up);
-        canvas.addEventListener("pointercancel", up);
-        mount.addEventListener("keydown", key);
-        detachControls = () => {
-          canvas.removeEventListener("pointerdown", down);
-          canvas.removeEventListener("pointermove", move);
-          canvas.removeEventListener("pointerup", up);
-          canvas.removeEventListener("pointercancel", up);
-          mount.removeEventListener("keydown", key);
-        };
-      } else {
+      };
+      const onKey = (event: KeyboardEvent) => {
+        const step = 0.18;
+        if (event.key === "ArrowLeft") turntable.rotation.y -= step;
+        else if (event.key === "ArrowRight") turntable.rotation.y += step;
+        else if (event.key === "ArrowUp") tilt.rotation.x = Math.max(-0.7, tilt.rotation.x - step);
+        else if (event.key === "ArrowDown") tilt.rotation.x = Math.min(0.7, tilt.rotation.x + step);
+        else return;
+        event.preventDefault();
+      };
+      canvas.addEventListener("pointerdown", down);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", up);
+      canvas.addEventListener("pointercancel", up);
+      mount.addEventListener("keydown", onKey);
+      detachControls = () => {
+        canvas.removeEventListener("pointerdown", down);
+        canvas.removeEventListener("pointermove", move);
+        canvas.removeEventListener("pointerup", up);
+        canvas.removeEventListener("pointercancel", up);
+        mount.removeEventListener("keydown", onKey);
+      };
+
+      if (!manual) {
         onScroll = () => {
           scrolling = true;
           window.clearTimeout(scrollTimer);
@@ -182,13 +180,12 @@ export function SensorModel({ mode = "auto", className = "h-[300px] w-full sm:h-
       }
 
       const tick = () => {
-        if (manual) {
-          if (!dragging && Math.abs(spin) > 0.0001) {
+        if (!dragging && !reduced) {
+          const coasting = Math.abs(spin) > 0.006;
+          if (coasting) {
             turntable.rotation.y += spin;
-            spin *= reduced ? 0 : 0.94;
-          }
-        } else if (!reduced) {
-          if (scrolling) {
+            spin *= 0.94;
+          } else if (!manual && scrolling) {
             const delta = Math.atan2(Math.sin(-turntable.rotation.y), Math.cos(-turntable.rotation.y));
             turntable.rotation.y += delta * 0.14;
           } else {
@@ -219,12 +216,8 @@ export function SensorModel({ mode = "auto", className = "h-[300px] w-full sm:h-
       ref={mountRef}
       className={className}
       role="img"
-      tabIndex={manual ? 0 : undefined}
-      aria-label={
-        manual
-          ? "Model of the temperature, humidity and barometric pressure sensor. Drag or use the arrow keys to turn it."
-          : "Rotating model of the temperature, humidity and barometric pressure sensor."
-      }
+      tabIndex={0}
+      aria-label="Model of the temperature, humidity and barometric pressure sensor. It turns on its own. Drag or use the arrow keys to turn it yourself."
     />
   );
 }

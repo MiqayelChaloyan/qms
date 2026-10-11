@@ -30,36 +30,59 @@ function sideY(y: number, depth: number) {
   return y + (OPENING.top + (y / 100) * span - y) * depth;
 }
 
-/** Wire rack. The top wire stays on the line the bottles stand on. */
+/** A point on a shelf deck. across 0 is the wall, 1 is the front lip. */
+function rackPoint(side: "left" | "right", y: number, depth: number, across: number) {
+  const along = side === "left" ? OPENING.left * depth : 100 - (100 - OPENING.right) * depth;
+  const jut = (side === "left" ? 6.4 : -6.4) * (1 - depth * 0.68);
+  const yWall = sideY(y, depth);
+  return { x: along + jut * across, y: yWall + 1.5 * (1 - depth * 0.55) * across };
+}
+
+/** Wire rack with a top surface and a front lip, so the shelf reads as a solid. */
 function Shelf({ side, y }: { side: "left" | "right"; y: number }) {
-  const outerX = side === "left" ? 0 : 100;
-  const innerX = side === "left" ? OPENING.left : OPENING.right;
-  const backY = sideY(y, 1);
-  const frontDrop = 2.5;
-  const backDrop = 0.85;
-  const wires = [0, 0.34, 0.68, 1];
-  const xAt = (depth: number) => (side === "left" ? innerX * depth : 100 - (100 - innerX) * depth);
+  const at = (depth: number, across: number) => rackPoint(side, y, depth, across);
+  const corner = (depth: number, across: number) => {
+    const point = at(depth, across);
+    return `${point.x},${point.y}`;
+  };
+  const lip = (depth: number) => {
+    const point = at(depth, 1);
+    return { x: point.x, y: point.y + 1.55 * (1 - depth * 0.6) };
+  };
+  const lip0 = lip(0);
+  const lip1 = lip(1);
+  const front0 = at(0, 1);
+  const front1 = at(1, 1);
 
   return (
     <g>
-      {wires.map((t) => (
-        <line
-          key={t}
-          x1={outerX}
-          y1={y + frontDrop * t}
-          x2={innerX}
-          y2={backY + backDrop * t}
-          stroke={t === 0 ? "#f8fafc" : "#c5cedb"}
-          strokeWidth={t === 0 ? 0.42 : 0.28}
-          strokeLinecap="round"
-        />
-      ))}
-      {[0.1, 0.24, 0.38, 0.52, 0.66, 0.8, 0.92].map((depth) => {
-        const x = xAt(depth);
-        const top = sideY(y, depth);
-        const drop = frontDrop + (backDrop - frontDrop) * depth;
-        return <line key={depth} x1={x} y1={top} x2={x} y2={top + drop} stroke="#e2e8f0" strokeWidth="0.2" />;
+      <polygon points={`${corner(0, 0)} ${corner(1, 0)} ${corner(1, 1)} ${corner(0, 1)}`} fill="#f8fafc" opacity="0.42" />
+      <polygon
+        points={`${front0.x},${front0.y} ${front1.x},${front1.y} ${lip1.x},${lip1.y} ${lip0.x},${lip0.y}`}
+        fill="#c5ceda"
+        opacity="0.95"
+      />
+      {[0, 0.33, 0.66, 1].map((across) => {
+        const start = at(0, across);
+        const end = at(1, across);
+        return (
+          <line
+            key={across}
+            x1={start.x}
+            y1={start.y}
+            x2={end.x}
+            y2={end.y}
+            stroke={across === 1 ? "#ffffff" : "#e8edf4"}
+            strokeWidth={across === 1 ? 0.32 : 0.2}
+          />
+        );
       })}
+      {[0.08, 0.24, 0.4, 0.56, 0.72, 0.88].map((depth) => {
+        const back = at(depth, 0);
+        const front = at(depth, 1);
+        return <line key={depth} x1={back.x} y1={back.y} x2={front.x} y2={front.y} stroke="#d5dce8" strokeWidth="0.18" />;
+      })}
+      <line x1={lip0.x} y1={lip0.y} x2={lip1.x} y2={lip1.y} stroke="#94a3b8" strokeWidth="0.22" />
     </g>
   );
 }
@@ -105,94 +128,227 @@ function FridgeWalls() {
   );
 }
 
-const CAP = "#5b4ce0";
+type BottleKind = "media" | "square" | "amber";
 
 type VialSpec = {
   side: "left" | "right";
   shelf: number;
   depth: number;
   tall: number;
-  fill: number;
-  stripe: string;
+  kind: BottleKind;
+  /** Extra lean in degrees, on top of the shelf slope. */
+  lean: number;
 };
 
-/** Clear media bottles with purple caps, packed along each wire shelf. */
+/** Clustered rows: a pair close together, then a gap, each bottle leaning a little. */
 const VIALS: VialSpec[] = [
-  { side: "left", shelf: 0, depth: 0.14, tall: 1.05, fill: 0.82, stripe: "#16a34a" },
-  { side: "left", shelf: 0, depth: 0.4, tall: 0.78, fill: 0.7, stripe: "#2563eb" },
-  { side: "left", shelf: 0, depth: 0.66, tall: 0.92, fill: 0.88, stripe: "#0f766e" },
-  { side: "left", shelf: 1, depth: 0.1, tall: 0.84, fill: 0.76, stripe: "#2563eb" },
-  { side: "left", shelf: 1, depth: 0.34, tall: 1.08, fill: 0.9, stripe: "#16a34a" },
-  { side: "left", shelf: 1, depth: 0.58, tall: 0.72, fill: 0.66, stripe: "#0f766e" },
-  { side: "left", shelf: 2, depth: 0.16, tall: 1, fill: 0.8, stripe: "#16a34a" },
-  { side: "left", shelf: 2, depth: 0.42, tall: 0.8, fill: 0.74, stripe: "#2563eb" },
-  { side: "left", shelf: 2, depth: 0.68, tall: 0.94, fill: 0.86, stripe: "#0f766e" },
-  { side: "right", shelf: 0, depth: 0.16, tall: 0.96, fill: 0.84, stripe: "#2563eb" },
-  { side: "right", shelf: 0, depth: 0.42, tall: 0.76, fill: 0.7, stripe: "#16a34a" },
-  { side: "right", shelf: 0, depth: 0.68, tall: 1.02, fill: 0.9, stripe: "#0f766e" },
-  { side: "right", shelf: 1, depth: 0.12, tall: 0.82, fill: 0.72, stripe: "#16a34a" },
-  { side: "right", shelf: 1, depth: 0.36, tall: 1.06, fill: 0.88, stripe: "#2563eb" },
-  { side: "right", shelf: 1, depth: 0.6, tall: 0.74, fill: 0.64, stripe: "#0f766e" },
-  { side: "right", shelf: 2, depth: 0.18, tall: 1.02, fill: 0.8, stripe: "#2563eb" },
-  { side: "right", shelf: 2, depth: 0.44, tall: 0.78, fill: 0.76, stripe: "#16a34a" },
-  { side: "right", shelf: 2, depth: 0.7, tall: 0.9, fill: 0.85, stripe: "#0f766e" },
+  { side: "left", shelf: 0, depth: 0.08, tall: 1.02, kind: "square", lean: 1.4 },
+  { side: "left", shelf: 0, depth: 0.3, tall: 0.74, kind: "media", lean: -2.6 },
+  { side: "left", shelf: 0, depth: 0.44, tall: 0.56, kind: "amber", lean: 2.2 },
+  { side: "left", shelf: 1, depth: 0.16, tall: 0.92, kind: "media", lean: -1.8 },
+  { side: "left", shelf: 1, depth: 0.32, tall: 0.64, kind: "amber", lean: 2.8 },
+  { side: "left", shelf: 1, depth: 0.58, tall: 0.8, kind: "media", lean: -1.2 },
+  { side: "left", shelf: 2, depth: 0.12, tall: 0.7, kind: "amber", lean: 2.4 },
+  { side: "left", shelf: 2, depth: 0.28, tall: 0.96, kind: "media", lean: -2.2 },
+  { side: "left", shelf: 2, depth: 0.5, tall: 1, kind: "square", lean: 1.1 },
+  { side: "right", shelf: 0, depth: 0.1, tall: 0.9, kind: "media", lean: 2.1 },
+  { side: "right", shelf: 0, depth: 0.26, tall: 0.58, kind: "amber", lean: -2.4 },
+  { side: "right", shelf: 0, depth: 0.52, tall: 1.02, kind: "square", lean: 1.6 },
+  { side: "right", shelf: 1, depth: 0.14, tall: 0.78, kind: "media", lean: -1.5 },
+  { side: "right", shelf: 1, depth: 0.3, tall: 0.66, kind: "media", lean: 2.6 },
+  { side: "right", shelf: 1, depth: 0.56, tall: 0.54, kind: "amber", lean: -2 },
+  { side: "right", shelf: 2, depth: 0.18, tall: 0.6, kind: "amber", lean: 1.8 },
+  { side: "right", shelf: 2, depth: 0.34, tall: 0.98, kind: "media", lean: -2.5 },
+  { side: "right", shelf: 2, depth: 0.62, tall: 0.72, kind: "media", lean: 1.3 },
 ];
+
+const MARKS = [400, 300, 200, 100];
+
+function BlueCap({ x, y, width, height }: { x: number; y: number; width: number; height: number }) {
+  const ribs = 7;
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} rx={2.5} fill="#1d4ed8" />
+      <rect x={x} y={y} width={width} height={height * 0.22} rx={1.5} fill="#ffffff" opacity="0.35" />
+      {Array.from({ length: ribs }, (_, index) => (
+        <line
+          key={index}
+          x1={x + 3 + (index * (width - 6)) / (ribs - 1)}
+          x2={x + 3 + (index * (width - 6)) / (ribs - 1)}
+          y1={y + 2}
+          y2={y + height - 2}
+          stroke="#ffffff"
+          strokeOpacity="0.28"
+          strokeWidth="0.8"
+        />
+      ))}
+    </g>
+  );
+}
+
+function MediaBottle({ id }: { id: number }) {
+  const glass = `media-glass-${id}`;
+  const liquid = `media-liquid-${id}`;
+  const body = `media-body-${id}`;
+  const shape = "M28 32h16v6c10 7 15 13 15 21v60c0 8-6 12-23 12S13 127 13 119V59c0-8 5-14 15-21v-6z";
+  return (
+    <g>
+      <defs>
+        <linearGradient id={glass} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#64748b" stopOpacity="0.34" />
+          <stop offset="0.1" stopColor="#ffffff" stopOpacity="0.96" />
+          <stop offset="0.26" stopColor="#f8fbff" stopOpacity="0.12" />
+          <stop offset="0.62" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="0.84" stopColor="#ffffff" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#334155" stopOpacity="0.4" />
+        </linearGradient>
+        <linearGradient id={liquid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.7" />
+          <stop offset="0.14" stopColor="#e7f0fa" stopOpacity="0.28" />
+          <stop offset="1" stopColor="#c5d4e8" stopOpacity="0.5" />
+        </linearGradient>
+        <clipPath id={body}>
+          <path d={shape} />
+        </clipPath>
+      </defs>
+      <ellipse cx="36" cy="136" rx="15" ry="2" fill="#64748b" opacity="0.3" />
+      <path d={shape} fill={`url(#${glass})`} stroke="#ffffff" strokeOpacity="0.8" strokeWidth="0.7" />
+      <g clipPath={`url(#${body})`}>
+        <rect x="12" y="64" width="48" height="70" fill={`url(#${liquid})`} />
+        <ellipse cx="36" cy="65" rx="14" ry="2.5" fill="#ffffff" opacity="0.8" />
+        <path d="M13 116c8 7 38 7 46 0v16H13z" fill="#94a3b8" opacity="0.28" />
+      </g>
+      <path d="M17 68c1.4 16 1.4 38 0 54" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M20 70c0.6 14 0.6 32 0 46" fill="none" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" opacity="0.7" />
+      <path d="M53 72c-0.7 14-0.7 34 0 48" fill="none" stroke="#475569" strokeWidth="1.3" strokeLinecap="round" opacity="0.35" />
+      {MARKS.map((mark, index) => (
+        <g key={mark} opacity="0.8">
+          <line x1="24" x2={index % 2 === 0 ? 32 : 29} y1={78 + index * 11} y2={78 + index * 11} stroke="#64748b" strokeWidth="0.45" />
+          <text x="33" y={80 + index * 11} fill="#64748b" fontSize="4.6" fontFamily="ui-sans-serif, system-ui, sans-serif">
+            {mark}
+          </text>
+        </g>
+      ))}
+      <text x="40" y="100" fill="#64748b" fontSize="5.5" fontFamily="ui-sans-serif, system-ui, sans-serif">
+        500 ml
+      </text>
+      <rect x="44" y="104" width="11" height="7" rx="0.5" fill="#e2e8f0" opacity="0.7" />
+      <rect x="31" y="28" width="10" height="6" rx="1" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.4" />
+      <BlueCap x={20} y={4} width={32} height={22} />
+    </g>
+  );
+}
+
+function SquareBottle({ id }: { id: number }) {
+  const glass = `square-glass-${id}`;
+  const liquid = `square-liquid-${id}`;
+  const body = `square-body-${id}`;
+  const shape = "M46 34h16v8c14 6 28 12 32 16v62c0 6-4 8-40 8s-40-2-40-8V58c4-4 18-10 32-16v-8z";
+  return (
+    <g>
+      <defs>
+        <linearGradient id={glass} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#64748b" stopOpacity="0.4" />
+          <stop offset="0.08" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="0.2" stopColor="#f8fafc" stopOpacity="0.16" />
+          <stop offset="0.78" stopColor="#ffffff" stopOpacity="0.08" />
+          <stop offset="1" stopColor="#334155" stopOpacity="0.36" />
+        </linearGradient>
+        <linearGradient id={liquid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#d5e2f2" stopOpacity="0.4" />
+        </linearGradient>
+        <clipPath id={body}>
+          <path d={shape} />
+        </clipPath>
+      </defs>
+      <ellipse cx="54" cy="130" rx="32" ry="2.4" fill="#64748b" opacity="0.28" />
+      <path d={shape} fill={`url(#${glass})`} stroke="#ffffff" strokeOpacity="0.75" strokeWidth="0.8" />
+      <g clipPath={`url(#${body})`}>
+        <rect x="14" y="62" width="80" height="68" fill={`url(#${liquid})`} />
+        <ellipse cx="54" cy="63" rx="28" ry="2.8" fill="#ffffff" opacity="0.7" />
+        <path d="M14 114c16 8 64 8 80 0v16H14z" fill="#94a3b8" opacity="0.25" />
+      </g>
+      <path d="M20 66c1.5 18 1.5 36 0 52" fill="none" stroke="#ffffff" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M90 70c-1 16-1 32 0 46" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+      {MARKS.map((mark, index) => (
+        <g key={mark} opacity="0.75">
+          <line x1="24" x2="34" y1={74 + index * 10} y2={74 + index * 10} stroke="#64748b" strokeWidth="0.5" />
+          <text x="36" y={76.5 + index * 10} fill="#64748b" fontSize="5.2" fontFamily="ui-sans-serif, system-ui, sans-serif">
+            {(4 - index) * 1000}
+          </text>
+        </g>
+      ))}
+      <text x="58" y="92" fill="#64748b" fontSize="7" fontFamily="ui-sans-serif, system-ui, sans-serif">
+        5000 ml
+      </text>
+      <rect x="62" y="96" width="16" height="8" rx="0.6" fill="#e2e8f0" opacity="0.75" />
+      <rect x="48" y="30" width="12" height="8" rx="1" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.4" />
+      <BlueCap x={39} y={6} width={30} height={22} />
+    </g>
+  );
+}
+
+function AmberBottle({ id }: { id: number }) {
+  const glass = `amber-glass-${id}`;
+  const shape = "M23 38h16v5c9 6 13 11 13 17v32c0 8-6 12-21 12S10 100 10 92V60c0-6 4-11 13-17v-5z";
+  return (
+    <g>
+      <defs>
+        <linearGradient id={glass} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#431407" />
+          <stop offset="0.14" stopColor="#fdba74" />
+          <stop offset="0.32" stopColor="#c2410c" />
+          <stop offset="0.55" stopColor="#9a3412" />
+          <stop offset="0.78" stopColor="#fb923c" />
+          <stop offset="1" stopColor="#431407" />
+        </linearGradient>
+        <clipPath id={`amber-body-${id}`}>
+          <path d={shape} />
+        </clipPath>
+      </defs>
+      <ellipse cx="31" cy="106" rx="15" ry="2" fill="#7c2d12" opacity="0.35" />
+      <path d={shape} fill={`url(#${glass})`} />
+      <g clipPath={`url(#amber-body-${id})`}>
+        <path d="M10 96c8 6 34 6 42 0v12H10z" fill="#431407" opacity="0.45" />
+      </g>
+      <path d="M15 62c1.2 10 1.2 24 0 36" fill="none" stroke="#ffedd5" strokeOpacity="0.85" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M46 66c-0.6 8-0.6 20 0 30" fill="none" stroke="#431407" strokeOpacity="0.45" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M24 34h14v6c-2 1-12 1-14 0z" fill="#292524" />
+      <rect x="26" y="24" width="10" height="14" rx="1" fill="#1c1917" />
+      <ellipse cx="31" cy="22" rx="12" ry="4.2" fill="#1c1917" />
+      <ellipse cx="31" cy="20.6" rx="12" ry="2.8" fill="#44403c" />
+      <ellipse cx="27" cy="19.8" rx="3.5" ry="0.9" fill="#ffffff" opacity="0.35" />
+    </g>
+  );
+}
 
 function FridgeVials() {
   const ordered = VIALS.map((vial, index) => ({ vial, index })).sort((a, b) => b.vial.depth - a.vial.depth);
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0">
       {ordered.map(({ vial, index }) => {
-        const span = vial.side === "left" ? OPENING.left : 100 - OPENING.right;
-        const x = vial.side === "left" ? span * vial.depth : 100 - span * vial.depth;
-        const y = sideY(SHELVES[vial.shelf], vial.depth);
-        const scale = (1.32 - vial.depth * 0.38) * vial.tall;
-        const width = 92 * scale;
-        const height = 118 * scale;
-        const glass = `bottle-glass-${index}`;
-        const body = `bottle-body-${index}`;
-        const surface = 96 - vial.fill * 48;
-        const shape = "M36 30h18c1 8 8 14 16 18c6 4 8 8 8 14v40c0 10-8 16-18 16H30c-10 0-18-6-18-16V62c0-6 2-10 8-14c8-4 15-10 16-18z";
+        const seat = rackPoint(vial.side, SHELVES[vial.shelf], vial.depth, 0.62);
+        const x = seat.x;
+        const y = seat.y;
+        const scale = (1.15 - vial.depth * 0.32) * vial.tall;
+        const frame = vial.kind === "square" ? { w: 108, h: 132 } : vial.kind === "amber" ? { w: 62, h: 108 } : { w: 72, h: 138 };
+        const slope = vial.side === "left" ? 5.5 : -5.5;
         return (
           <svg
             key={`${vial.side}-${index}`}
-            viewBox="0 0 90 130"
-            width={width}
-            height={height}
+            viewBox={`0 0 ${frame.w} ${frame.h}`}
+            width={frame.w * scale}
+            height={frame.h * scale}
             className="absolute overflow-visible"
-            style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -100%)" }}
+            style={{
+              left: `${x}%`,
+              top: `${y + 0.2}%`,
+              transform: `translate(-50%, -100%) rotate(${slope + vial.lean}deg)`,
+              transformOrigin: "center bottom",
+            }}
           >
-            <defs>
-              <linearGradient id={glass} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stopColor="#e8eef8" stopOpacity="0.35" />
-                <stop offset="0.18" stopColor="#ffffff" stopOpacity="0.92" />
-                <stop offset="0.42" stopColor="#d5e2f2" stopOpacity="0.18" />
-                <stop offset="0.7" stopColor="#ffffff" stopOpacity="0.62" />
-                <stop offset="1" stopColor="#94a3b8" stopOpacity="0.28" />
-              </linearGradient>
-              <clipPath id={body}>
-                <path d={shape} />
-              </clipPath>
-            </defs>
-            <ellipse cx="45" cy="126" rx="22" ry="3" fill="#180061" opacity="0.1" />
-            <path d={shape} fill={`url(#${glass})`} stroke="#ffffff" strokeOpacity="0.8" strokeWidth="1.1" />
-            <g clipPath={`url(#${body})`}>
-              <rect x="12" y={surface} width="66" height={130 - surface} fill="#e7f0fb" opacity="0.55" />
-              <ellipse cx="45" cy={surface + 1} rx="24" ry="3.2" fill="#ffffff" opacity="0.55" />
-              <rect x="24" y="62" width="42" height="36" rx="1.5" fill="#ffffff" opacity="0.92" />
-              <rect x="24" y="62" width="42" height="5" fill={vial.stripe} />
-              <rect x="28" y="72" width="22" height="1.6" rx="0.8" fill="#94a3b8" />
-              <rect x="28" y="77" width="30" height="1.6" rx="0.8" fill="#cbd5e1" />
-              <rect x="28" y="82" width="16" height="1.6" rx="0.8" fill="#cbd5e1" />
-            </g>
-            <path d="M22 58c3 16 3 36 1 52" fill="none" stroke="#ffffff" strokeOpacity="0.9" strokeWidth="3" strokeLinecap="round" />
-            <path d="M68 60c-1.5 14-1.5 32 0 46" fill="none" stroke="#64748b" strokeOpacity="0.25" strokeWidth="2" strokeLinecap="round" />
-            <rect x="30" y="4" width="30" height="20" rx="3.5" fill={CAP} />
-            <rect x="30" y="4" width="30" height="4" rx="2" fill="#ffffff" opacity="0.4" />
-            {[9, 13, 17].map((rib) => (
-              <line key={rib} x1="31" x2="59" y1={rib} y2={rib} stroke="#ffffff" strokeOpacity="0.28" strokeWidth="1" />
-            ))}
-            <rect x="38" y="22" width="14" height="10" rx="2" fill="#eef2f7" stroke="#ffffff" strokeOpacity="0.7" />
+            {vial.kind === "amber" ? <AmberBottle id={index} /> : vial.kind === "square" ? <SquareBottle id={index} /> : <MediaBottle id={index} />}
           </svg>
         );
       })}

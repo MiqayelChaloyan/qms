@@ -5,7 +5,6 @@ import { CirrusNav } from "@/components/cirrus/cirrus-nav";
 import { SiteFooter } from "@/components/cirrus/site-footer";
 import { ContactForm } from "@/components/cirrus/contact-form";
 import { RevealKit, Words } from "@/components/cirrus/reveal";
-import { SensorModel } from "@/components/cirrus/sensor-model";
 import { ReticleCursor } from "@/components/cirrus/reticle-cursor";
 import { scrollPageTo, SmoothScrollProvider } from "@/components/cirrus/smooth-scroll-provider";
 
@@ -81,32 +80,19 @@ export function ContactExperience() {
             >
               Hello
             </p>
-            <div className="relative mx-auto grid max-w-[90rem] items-end gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-              <div>
-                <p data-rise className="font-mono text-[11px] tracking-[0.25em] text-[#6d28d9] uppercase">
-                  Contact us
-                </p>
-                <h1 className="mt-5 font-display text-[clamp(2.8rem,1.4rem+5vw,5.6rem)] leading-[0.9] font-medium tracking-[-0.03em] text-[#180061]">
-                  <Words text="Write to" />
-                  <span className="block italic text-[#6d28d9]">
-                    <Words text="the team." />
-                  </span>
-                </h1>
-                <p data-rise className="mt-7 max-w-md text-base leading-relaxed text-[#180061]/70 sm:text-lg">
-                  For enquiries, please leave a message. Questions about modules, setup or training all come to the same place.
-                </p>
-              </div>
-              <div className="relative mx-auto h-72 w-full max-w-sm translate-x-6 sm:h-80 sm:translate-x-10 lg:mx-0 lg:ml-auto lg:h-[22rem] lg:translate-x-16">
-                <div aria-hidden className="absolute inset-[10%] rounded-full border border-[#180061]/10" />
-                <div aria-hidden className="absolute inset-[22%] rounded-full border border-dashed border-[#6600ff]/25" />
-                <SensorModel
-                  mode="manual"
-                  className="relative h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-[#6600ff]"
-                />
-                <span className="pointer-events-none absolute bottom-1 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/80 px-4 py-2 font-mono text-[10px] tracking-[0.2em] text-[#180061]/70 uppercase shadow-sm">
-                  Drag to rotate
+            <div className="relative mx-auto max-w-[90rem]">
+              <p data-rise className="font-mono text-[11px] tracking-[0.25em] text-[#6d28d9] uppercase">
+                Contact us
+              </p>
+              <h1 className="mt-5 font-display text-[clamp(2.8rem,1.4rem+5vw,5.6rem)] leading-[0.9] font-medium tracking-[-0.03em] text-[#180061]">
+                <Words text="Write to" />
+                <span className="block italic text-[#6d28d9]">
+                  <Words text="the team." />
                 </span>
-              </div>
+              </h1>
+              <p data-rise className="mt-7 max-w-md text-base leading-relaxed text-[#180061]/70 sm:text-lg">
+                For enquiries, please leave a message. Questions about modules, setup or training all come to the same place.
+              </p>
             </div>
           </section>
 

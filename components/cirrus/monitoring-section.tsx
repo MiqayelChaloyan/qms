@@ -299,7 +299,7 @@ export function MonitoringSection() {
               <div aria-hidden className="pointer-events-none absolute inset-[8%] rounded-full border border-white/10" />
               <div aria-hidden className="pointer-events-none absolute inset-[20%] rounded-full border border-dashed border-[#a78bfa]/30" />
               <div aria-hidden className="pointer-events-none absolute inset-[30%] rounded-full bg-[#6600ff]/20 blur-2xl" />
-              <SensorModel mode="manual" className="absolute inset-0" />
+              <SensorModel className="absolute inset-0" />
               <span className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-white/70 uppercase">
                 Drag to turn
               </span>
