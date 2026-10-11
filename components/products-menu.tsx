@@ -85,7 +85,7 @@ export function ProductsMenu({ variant, onNavigate }: ProductsMenuProps) {
                     {category.modules.map((module) => (
                       <li key={module.id}>
                         <Link
-                          href={`/#${module.id}`}
+                          href={`/#${module.anchor}`}
                           className="text-sm leading-snug text-brand-navy/70 hover:text-brand-navy"
                           onClick={() => setOpen(false)}
                         >
@@ -138,7 +138,7 @@ export function ProductsMenu({ variant, onNavigate }: ProductsMenuProps) {
                 {category.modules.map((module) => (
                   <li key={module.id}>
                     <Link
-                      href={`/#${module.id}`}
+                      href={`/#${module.anchor}`}
                       className="text-[#180061]/80"
                       onClick={onNavigate}
                     >

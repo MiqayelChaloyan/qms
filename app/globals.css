@@ -61,6 +61,65 @@ body {
   background-color: #12004a;
 }
 
+.cirrus section[id] {
+  scroll-margin-top: 6.5rem;
+}
+
+@keyframes solution-label {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes solution-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes settings-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes thermo-fill {
+  0%,
+  100% {
+    height: 46%;
+  }
+  50% {
+    height: 60%;
+  }
+}
+
+@keyframes solution-breathe {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
 .cirrus ::selection {
   background: #6d28d9;
   color: #f5f5fa;

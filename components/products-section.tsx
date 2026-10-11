@@ -52,7 +52,7 @@ export function ProductsSection() {
                         {module.description}
                       </p>
                       <Link
-                        href={`/#${module.id}`}
+                        href={`/#${module.anchor}`}
                         className="mt-4 text-sm font-semibold text-brand-orange hover:text-brand-orange-hover"
                       >
                         Learn more

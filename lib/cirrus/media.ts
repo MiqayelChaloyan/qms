@@ -18,6 +18,7 @@ export const LAB_SCENE = {
   door: "/cirrus/lab-door.webp",
   tech: "/cirrus/lab-tech.webp",
   room: "/cirrus/lab-room.webp",
+  coldRoom: "/cirrus/lab-cold-room.webp",
 } as const;
 
 export const LAB_PHOTOS = {

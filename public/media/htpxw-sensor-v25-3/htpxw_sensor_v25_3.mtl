@@ -1,0 +1,41 @@
+newmtl BodyBlue
+Ka 0.0558 0.0846 0.1062
+Kd 0.3100 0.4700 0.5900
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2
+
+newmtl GreenUpper
+Ka 0.0864 0.1314 0.0630
+Kd 0.4800 0.7300 0.3500
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2
+
+newmtl GreenLower
+Ka 0.0864 0.1314 0.0630
+Kd 0.4800 0.7300 0.3500
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2
+
+newmtl SensorBlack
+Ka 0.0014 0.0014 0.0018
+Kd 0.0080 0.0080 0.0100
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2
+
+newmtl WhiteText
+Ka 0.1764 0.1764 0.1764
+Kd 0.9800 0.9800 0.9800
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2
+
+newmtl GreenText
+Ka 0.0864 0.1314 0.0630
+Kd 0.4800 0.7300 0.3500
+Ks 0.05 0.05 0.05
+Ns 18
+illum 2

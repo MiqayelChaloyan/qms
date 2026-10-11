@@ -11,11 +11,11 @@ const SPECS = [
 
 export function AircraftSection() {
   return (
-    <section id="platform" className="bg-[#f5f5fa] px-6 py-28 md:px-12 lg:py-40">
-      <div className="mx-auto grid max-w-[90rem] items-center gap-16 lg:grid-cols-2 lg:gap-24">
+    <section id="about" className="bg-[#f5f5fa] px-5 py-20 sm:px-8 md:py-28 lg:px-12 lg:py-36">
+      <div className="mx-auto grid max-w-[90rem] items-center gap-12 lg:grid-cols-2 lg:gap-24">
         <div>
           <p data-rise className="font-mono text-[11px] tracking-[0.25em] text-[#6d28d9] uppercase">
-            02 — The platform
+            Built with the laboratory
           </p>
           <h2 className="mt-6 font-display text-[clamp(2.6rem,6vw,5rem)] leading-[0.95] font-medium tracking-[-0.03em] text-[#180061]">
             <Words text="Built for" />

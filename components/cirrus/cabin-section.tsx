@@ -21,14 +21,14 @@ export function CabinSection() {
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-[#f5f5fa] via-[#f5f5fa]/75 to-transparent"
       />
 
-      <div className="relative flex h-full flex-col justify-between px-6 pt-28 pb-12 md:px-12">
+      <div className="relative flex h-full flex-col justify-between px-5 pt-24 pb-10 sm:px-8 md:pt-28 md:pb-12 lg:px-12">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <h2 className="font-display text-[clamp(2.6rem,6vw,5rem)] leading-[0.95] font-medium tracking-[-0.03em] text-[#180061]">
             Every bench,
             <span className="block italic text-[#6d28d9]">in view.</span>
           </h2>
           <p className="font-mono text-[11px] tracking-[0.25em] text-[#180061]/60 uppercase">
-            03 — Scroll, step inside
+            On the bench
           </p>
         </div>
 

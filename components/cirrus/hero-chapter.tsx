@@ -3,12 +3,12 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { LAB_SCENE } from "@/lib/cirrus/media";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WORDMARK = "QMSPAD";
 const ZOOM_END = 0.16;
 
 /** Door leaf rectangle inside the 16:9 hall photo, in % of the stage. */
@@ -21,7 +21,7 @@ const DOOR_CENTER = `${DOOR_CX * 100}% ${DOOR_CY * 100}%`;
 
 /** Camera eye level in the hall (fraction of stage height); the back room's vanishing point is pinned here. */
 const EYE_Y = 0.494;
-/** Point of the back-room photo framed in the doorway (fraction of the 16:9 image): right of its vanishing point, on the scientists. */
+/** Default point of the back-room photo framed in the doorway (fraction of the 16:9 image): right of its vanishing point, on the scientists. */
 const ROOM_VP = { x: 0.64, y: 0.46 };
 /** Once through the door the room stays shifted so its right side, where the team works, holds the frame. */
 const ROOM_END_SHIFT = -0.9;
@@ -52,8 +52,10 @@ function displayFontFamily() {
   return family || "sans-serif";
 }
 
-/** White plate with the wordmark cut out; returns the data URL and the P stem as a % anchor for the zoom. */
-function buildMask(width: number, height: number) {
+type Zoom = { wordmark: string; before: string; letter: string; at: number };
+
+/** White plate with the wordmark cut out; returns the data URL and a solid letter stroke as a % anchor for the zoom. */
+function buildMask(width: number, height: number, { wordmark, before, letter, at }: Zoom) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -62,7 +64,7 @@ function buildMask(width: number, height: number) {
 
   const family = displayFontFamily();
   ctx.font = `700 100px ${family}`;
-  const measured = ctx.measureText(WORDMARK).width;
+  const measured = ctx.measureText(wordmark).width;
   const fontSize = Math.min((width * 0.92 * 100) / measured, height * 0.62);
   ctx.font = `700 ${fontSize}px ${family}`;
 
@@ -71,12 +73,12 @@ function buildMask(width: number, height: number) {
   ctx.globalCompositeOperation = "destination-out";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(WORDMARK, width / 2, height / 2);
+  ctx.fillText(wordmark, width / 2, height / 2);
 
-  const wordWidth = ctx.measureText(WORDMARK).width;
+  const wordWidth = ctx.measureText(wordmark).width;
   const left = width / 2 - wordWidth / 2;
   const stemX =
-    left + ctx.measureText("QMS").width + ctx.measureText("P").width * 0.2;
+    left + ctx.measureText(before).width + ctx.measureText(letter).width * at;
 
   return {
     url: canvas.toDataURL("image/png"),
@@ -84,7 +86,36 @@ function buildMask(width: number, height: number) {
   };
 }
 
-export function HeroChapter() {
+type HeroChapterProps = {
+  id?: string;
+  zoom?: Zoom;
+  roomSrc?: string;
+  roomFocus?: { x: number; y: number };
+  title?: string;
+  accent?: string;
+  body?: string;
+  cta?: { href: string; label: string };
+  labels?: [string, string];
+  description?: string;
+};
+
+const DEFAULT_ZOOM: Zoom = { wordmark: "QMSPAD", before: "QMS", letter: "P", at: 0.2 };
+
+export function HeroChapter({
+  id = "hero",
+  zoom: zoomConfig = DEFAULT_ZOOM,
+  roomSrc = LAB_SCENE.room,
+  roomFocus = ROOM_VP,
+  title = "The lab,",
+  accent = "audit-ready.",
+  body = "Documents, training, equipment, temperatures and audits — every quality record in your laboratory, controlled in one system.",
+  cta = { href: "#idea", label: "See the system" },
+  labels = ["QMS Pad · Laboratory quality system", "ISO 15189 · ISO 17025 ready"],
+  description = "Scrolling walks down a laboratory aisle past a technician at her instrument; the door at the end swings open onto a second lab where two scientists work at microscopes, and the view rises into the ceiling lights.",
+}: HeroChapterProps = {}) {
+  const { wordmark, before, letter, at } = zoomConfig;
+  const focusXRatio = roomFocus.x;
+  const focusYRatio = roomFocus.y;
   const sectionRef = useRef<HTMLElement>(null);
   const plateRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -104,7 +135,7 @@ export function HeroChapter() {
     if (!plate) return;
 
     const apply = () => {
-      const mask = buildMask(window.innerWidth, window.innerHeight);
+      const mask = buildMask(window.innerWidth, window.innerHeight, { wordmark, before, letter, at });
       if (!mask) return;
       const s = plate.style;
       s.webkitMaskImage = `url(${mask.url})`;
@@ -117,7 +148,7 @@ export function HeroChapter() {
     void document.fonts.ready.then(apply);
     window.addEventListener("resize", apply);
     return () => window.removeEventListener("resize", apply);
-  }, []);
+  }, [wordmark, before, letter, at]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -189,8 +220,8 @@ export function HeroChapter() {
       const vh = window.innerHeight;
       const roomW = Math.max(vw, vh * ROOM_ASPECT) * (1 + 2 * ROOM_OVERSCAN);
       const roomH = roomW / ROOM_ASPECT;
-      const focusX = vw / 2 + (ROOM_VP.x - 0.5) * roomW;
-      const focusY = vh / 2 + (ROOM_VP.y - 0.5) * roomH;
+      const focusX = vw / 2 + (focusXRatio - 0.5) * roomW;
+      const focusY = vh / 2 + (focusYRatio - 0.5) * roomH;
       const stageW = Math.max(vw, (vh * 16) / 9);
       const stageH = stageW * (9 / 16);
       const doorX = vw / 2 + (DOOR_CX - 0.5) * stageW;
@@ -251,10 +282,10 @@ export function HeroChapter() {
       gsap.ticker.remove(tick);
       window.removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [focusXRatio, focusYRatio]);
 
   return (
-    <section id="hero" ref={sectionRef} className="relative h-[600vh]">
+    <section id={id} ref={sectionRef} className="relative h-[600vh]">
       <div className="sticky top-0 h-[100dvh] overflow-hidden bg-[#f5f5fa]">
         <div className="absolute inset-0">
           <div
@@ -266,7 +297,7 @@ export function HeroChapter() {
               className="absolute -inset-[10%] will-change-transform"
             >
               <Image
-                src={LAB_SCENE.room}
+                src={roomSrc}
                 alt=""
                 fill
                 unoptimized
@@ -370,8 +401,8 @@ export function HeroChapter() {
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between px-6 pt-24 font-mono text-[10px] tracking-[0.25em] text-white/70 uppercase md:px-12">
-          <span>QMS Pad · Laboratory quality system</span>
-          <span className="hidden sm:inline">ISO 15189 · ISO 17025 ready</span>
+          <span>{labels[0]}</span>
+          <span className="hidden sm:inline">{labels[1]}</span>
         </div>
 
         <div
@@ -388,27 +419,19 @@ export function HeroChapter() {
           className="pointer-events-none absolute inset-0 flex flex-col justify-center px-6 opacity-0 md:px-12"
         >
           <h1 className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.9] font-medium tracking-[-0.03em] text-[#180061]">
-            The lab,
-            <span className="block italic text-[#6d28d9]">audit-ready.</span>
+            {title}
+            <span className="block italic text-[#6d28d9]">{accent}</span>
           </h1>
-          <p className="mt-8 max-w-md text-base leading-relaxed text-[#180061]/75">
-            Documents, training, equipment, temperatures and audits — every
-            quality record in your laboratory, controlled in one system.
-          </p>
-          <a
-            href="#idea"
-            className="mt-8 inline-flex w-fit rounded-full bg-[#180061] px-7 py-3 text-sm text-[#f5f5fa]"
+          <p className="mt-8 max-w-md text-base leading-relaxed text-[#180061]/75">{body}</p>
+          <Link
+            href={cta.href}
+            className="mt-8 inline-flex w-fit rounded-full bg-[#180061] px-7 py-3 text-sm text-[#f5f5fa] transition-colors hover:bg-[#6d28d9]"
           >
-            See the system
-          </a>
+            {cta.label}
+          </Link>
         </div>
 
-        <p className="sr-only">
-          Scrolling walks down a laboratory aisle past a technician at her
-          instrument; the door at the end swings open onto a second lab where
-          two scientists work at microscopes, and the view rises into the
-          ceiling lights.
-        </p>
+        <p className="sr-only">{description}</p>
       </div>
     </section>
   );

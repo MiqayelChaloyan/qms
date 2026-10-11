@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Words } from "@/components/cirrus/reveal";
 import { LAB_PHOTOS } from "@/lib/cirrus/media";
+import styles from "@/components/cirrus/styles.module.css";
 
 function FilmChip({ src }: { src: string }) {
   return (
@@ -30,10 +31,10 @@ const FACTS = [
 
 export function IdeaSection() {
   return (
-    <section id="idea" className="bg-[#f5f5fa] px-6 py-28 md:px-12 lg:py-40">
-      <div className="mx-auto max-w-[90rem]">
-        <p className="font-mono text-[11px] tracking-[0.25em] text-[#6d28d9] uppercase" data-rise>
-          01 — The system
+    <section id="idea" className={`${styles.section} ${styles.mist}`}>
+      <div className={styles.container}>
+        <p className={styles.eyebrow} data-rise>
+          One laboratory system
         </p>
         <p className="mt-8 max-w-[22ch] font-display text-[clamp(2.1rem,5.2vw,4.4rem)] leading-[1.08] font-medium tracking-[-0.02em] text-[#180061] md:max-w-none">
           <Words text="One system for the whole laboratory —" />{" "}
@@ -45,7 +46,7 @@ export function IdeaSection() {
           <Words text="Every audit, ready." className="italic text-[#6d28d9]" />
         </p>
 
-        <div className="mt-24 grid gap-14 md:grid-cols-3">
+        <div className="mt-16 grid gap-10 md:mt-24 md:grid-cols-3 md:gap-14">
           {FACTS.map((fact) => (
             <div key={fact.label}>
               <div data-line className="h-px w-full bg-[#180061]/25" />

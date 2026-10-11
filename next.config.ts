@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       "*.css": {
+        condition: { not: { path: "*.module.css" } },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
